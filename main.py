@@ -156,6 +156,12 @@ class Ui_MainWindow(object):
             modify_button.clicked.connect(self.modify)
             self.gridLayout_2.addWidget(modify_button, j, 0, 1, 1)
 
+            j += 1
+
+            message_button = QtWidgets.QPushButton("Сообщения")
+            message_button.clicked.connect(self.messages)
+            self.gridLayout_2.addWidget(message_button, j, 0, 1, 1)
+
             def admin(i, j):
                 k = 0
                 i += 1
@@ -185,6 +191,37 @@ class Ui_MainWindow(object):
 
                     self.profile()
 
+                def delete_news(id):
+                    data = (id, )
+                    query = "delete from news where newsid = %s"
+                    cursor.execute(query, data)
+                    cnx.commit()
+
+                    self.profile()
+
+                query = "select idnews, title, body from news;"
+                cursor.execute(query)
+
+                j = 0
+                i = 0
+
+                for item in cursor:
+                    item_group = QtWidgets.QGroupBox(" ")
+                    categorieslayout = QtWidgets.QGridLayout(item_group)
+                    self.gridLayout_2.addWidget(item_group, i, 0, 1, 1)
+                    for value in item:
+                        if j == 0:
+                            item_group.setTitle(str(value))
+                            j += 1
+                            continue
+                        value = str(value)
+                        categorieslayout.addWidget(QtWidgets.QLabel(value), i, j, 1, 1)
+                        j += 1
+                    button = QtWidgets.QPushButton("Удалить")
+                    self.gridLayout_2.addWidget(button, i, j + 1, 1, 1)
+                    button.clicked.connect(lambda state, line=id: delete_news(line))
+                    i += 1
+                    j = 0
 
             query = "select acc_type from user_acc where u_id = %s"
             data = (user_id, )
@@ -522,6 +559,33 @@ class Ui_MainWindow(object):
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.label_2.sizePolicy().hasHeightForWidth())
         '''
+
+    def messages(self):
+        self.cleanlayout()
+
+        global user_id
+
+        query = "select sender_id, reciver_id, text, s_time from messages where sender_id = %s or reciver_id = %s;"
+        data = (user_id, user_id)
+        cursor.execute(query, data)
+
+        j = 0
+        i = 0
+
+        for item in cursor:
+            item_group = QtWidgets.QGroupBox(" ")
+            categorieslayout = QtWidgets.QGridLayout(item_group)
+            self.gridLayout_2.addWidget(item_group, i, 0, 1, 1)
+            for value in item:
+                if j == 0:
+                    item_group.setTitle(str(value))
+                    j += 1
+                    continue
+                value = str(value)
+                categorieslayout.addWidget(QtWidgets.QLabel(value), i, j, 1, 1)
+                j += 1
+            i += 1
+            j = 0
 
 
 class Message(object):
