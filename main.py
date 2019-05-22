@@ -193,7 +193,7 @@ class Ui_MainWindow(object):
 
                 def delete_news(id):
                     data = (id, )
-                    query = "delete from news where newsid = %s"
+                    query = "delete from news where idnews = %s"
                     cursor.execute(query, data)
                     cnx.commit()
 
@@ -202,20 +202,12 @@ class Ui_MainWindow(object):
                 query = "select idnews, title, body from news;"
                 cursor.execute(query)
 
-                j = 0
-                i = 0
-
                 for item in cursor:
-                    item_group = QtWidgets.QGroupBox(" ")
-                    categorieslayout = QtWidgets.QGridLayout(item_group)
-                    self.gridLayout_2.addWidget(item_group, i, 0, 1, 1)
                     for value in item:
                         if j == 0:
-                            item_group.setTitle(str(value))
-                            j += 1
-                            continue
+                            id = str(value)
                         value = str(value)
-                        categorieslayout.addWidget(QtWidgets.QLabel(value), i, j, 1, 1)
+                        self.gridLayout_2.addWidget(QtWidgets.QLabel(value), i, j, 1, 1)
                         j += 1
                     button = QtWidgets.QPushButton("Удалить")
                     self.gridLayout_2.addWidget(button, i, j + 1, 1, 1)
