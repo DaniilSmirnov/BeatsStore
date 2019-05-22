@@ -91,7 +91,7 @@ class Ui_MainWindow(object):
         MainWindow.setWindowTitle(_translate("MainWindow", "Beat Store by Rodionov"))
         self.groupBox.setTitle(_translate("MainWindow", "Лучшее"))
         self.profilebutton.setText(_translate("MainWindow", "Профиль"))
-        self.basketbutton.setText(_translate("MainWindow", "Корзина"))
+        self.basketbutton.setText(_translate("MainWindow", "Сообщения"))
         self.beatsbutton.setText(_translate("MainWindow", "Биты"))
         self.searchbutton.setText(_translate("MainWindow", "Поиск"))
         self.newsbutton.setText(_translate("MainWindow", "Новости"))
@@ -350,20 +350,26 @@ class Ui_MainWindow(object):
         self.cleanlayout()
         self.groupBox.setTitle("Новости")
 
-        query = "select * from news;"
+        query = "select title, body from news;"
         cursor.execute(query)
 
         j = 0
-        i = 1
+        i = 0
 
         for item in cursor:
             item_group = QtWidgets.QGroupBox(" ")
             categorieslayout = QtWidgets.QGridLayout(item_group)
-            self.gridLayout_2.addWidget(item_group)
+            self.gridLayout_2.addWidget(item_group, i, 0, 1, 1)
             for value in item:
+                if j == 0:
+                    item_group.setTitle(str(value))
+                    j += 1
+                    continue
                 value = str(value)
                 categorieslayout.addWidget(QtWidgets.QLabel(value), i, j, 1, 1)
                 j += 1
+            i += 1
+            j = 0
 
     def addtrack(self):
 
