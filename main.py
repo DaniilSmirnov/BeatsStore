@@ -2,9 +2,9 @@ from PyQt5 import QtCore, QtGui, QtWidgets, QtMultimedia, QtMultimediaWidgets
 import mysql.connector
 from PyQt5.QtCore import QTimer
 
-authorized = False
+authorized = True #ИЗМЕНИТЬ НА FALSE
 
-user_id = 0
+user_id = 1
 
 try:
     cnx = mysql.connector.connect(user='root', password='i130813',
@@ -557,27 +557,87 @@ class Ui_MainWindow(object):
 
         global user_id
 
-        query = "select sender_id, reciver_id, text, s_time from messages where sender_id = %s or reciver_id = %s;"
-        data = (user_id, user_id)
+        self.scrollArea_2 = QtWidgets.QScrollArea(self.scrollAreaWidgetContents)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Expanding)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.scrollArea_2.sizePolicy().hasHeightForWidth())
+        self.scrollArea_2.setSizePolicy(sizePolicy)
+        self.scrollArea_2.setWidgetResizable(True)
+        self.scrollArea_2.setObjectName("scrollArea_2")
+        self.scrollAreaWidgetContents_2 = QtWidgets.QWidget()
+        self.scrollAreaWidgetContents_2.setGeometry(QtCore.QRect(0, 0, 68, 263))
+        self.scrollAreaWidgetContents_2.setObjectName("scrollAreaWidgetContents_2")
+        self.verticalLayout_2 = QtWidgets.QVBoxLayout(self.scrollAreaWidgetContents_2)
+        self.verticalLayout_2.setObjectName("verticalLayout_2")
+        self.scrollArea_2.setWidget(self.scrollAreaWidgetContents_2)
+        self.gridLayout_2.addWidget(self.scrollArea_2, 0, 0, 1, 1)
+        self.scrollArea_3 = QtWidgets.QScrollArea(self.scrollAreaWidgetContents)
+        self.scrollArea_3.setWidgetResizable(True)
+        self.scrollArea_3.setObjectName("scrollArea_3")
+        self.scrollAreaWidgetContents_3 = QtWidgets.QWidget()
+        self.scrollAreaWidgetContents_3.setGeometry(QtCore.QRect(0, 0, 436, 263))
+        self.scrollAreaWidgetContents_3.setObjectName("scrollAreaWidgetContents_3")
+        self.verticalLayout_3 = QtWidgets.QVBoxLayout(self.scrollAreaWidgetContents_3)
+        self.verticalLayout_3.setObjectName("verticalLayout_3")
+        self.scrollArea_3.setWidget(self.scrollAreaWidgetContents_3)
+        self.gridLayout_2.addWidget(self.scrollArea_3, 0, 1, 1, 1)
+
+        query = "select nick from user_acc where u_id in (select sender_id from messages where reciver_id = %s);"
+        data = (user_id, )
         cursor.execute(query, data)
 
-        j = 0
-        i = 0
-
         for item in cursor:
-            item_group = QtWidgets.QGroupBox(" ")
-            categorieslayout = QtWidgets.QGridLayout(item_group)
-            self.gridLayout_2.addWidget(item_group, i, 0, 1, 1)
             for value in item:
-                if j == 0:
-                    item_group.setTitle(str(value))
-                    j += 1
-                    continue
                 value = str(value)
-                categorieslayout.addWidget(QtWidgets.QLabel(value), i, j, 1, 1)
-                j += 1
-            i += 1
-            j = 0
+                nick = value
+                button = QtWidgets.QPushButton(value)
+                self.verticalLayout_2.addWidget(button)
+                button.clicked.connect(lambda state, id = nick: dialog(id))
+
+        def dialog(id):
+
+            for i in reversed(range(self.verticalLayout_3.count())):
+                self.verticalLayout_3.itemAt(i).widget().deleteLater()
+
+            query = 'select u_id from user_acc where nick = %s'
+            cursor.execute(query, (id, ))
+            for item in cursor:
+                for value in item:
+                    id = str(value)
+
+            query = "select text from messages where (reciver_id = %s and sender_id = %s) or (sender_id = %s and reciver_id = %s);"
+            data = (user_id, id, user_id, id)
+            cursor.execute(query, data)
+            for item in cursor:
+                for value in item:
+                    self.verticalLayout_3.addWidget(QtWidgets.QLabel(str(value)))
+
+            item_group = QtWidgets.QGroupBox("")
+            categorieslayout = QtWidgets.QHBoxLayout(item_group)
+            self.verticalLayout_3.addWidget(item_group)
+
+            line_edit = QtWidgets.QLineEdit()
+            categorieslayout.addWidget(line_edit)
+
+            button = QtWidgets.QPushButton("Отправить")
+            categorieslayout.addWidget(button)
+            button.clicked.connect(lambda: send(id))
+
+            def send(id):
+                query = "insert into messages values (default, %s, %s, %s, now())"
+                data = (user_id, id, line_edit.text())
+                cursor.execute(query, data)
+                cnx.commit()
+
+                query = 'select nick from user_acc where u_id = %s'
+                cursor.execute(query, (id,))
+                for item in cursor:
+                    for value in item:
+                        id = str(value)
+
+                dialog(id)
+
 
 
 class Message(object):
