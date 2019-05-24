@@ -29,7 +29,7 @@ except BaseException as e:
     msgbox.exec()
 
 
-class Ui_MainWindow(object):
+class Ui_MainWindow(QtWidgets.QWidget):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
         MainWindow.resize(1280, 720)
@@ -91,7 +91,7 @@ class Ui_MainWindow(object):
         MainWindow.setWindowTitle(_translate("MainWindow", "Beat Store by Rodionov"))
         self.groupBox.setTitle(_translate("MainWindow", "Лучшее"))
         self.profilebutton.setText(_translate("MainWindow", "Профиль"))
-        self.basketbutton.setText(_translate("MainWindow", "Сообщения"))
+        self.basketbutton.setText(_translate("MainWindow", "Корзина"))
         self.beatsbutton.setText(_translate("MainWindow", "Биты"))
         self.searchbutton.setText(_translate("MainWindow", "Поиск"))
         self.newsbutton.setText(_translate("MainWindow", "Новости"))
@@ -557,6 +557,8 @@ class Ui_MainWindow(object):
 
         global user_id
 
+        self.groupBox.setTitle("Cообщения")
+
         self.scrollArea_2 = QtWidgets.QScrollArea(self.scrollAreaWidgetContents)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Expanding)
         sizePolicy.setHorizontalStretch(0)
@@ -594,6 +596,16 @@ class Ui_MainWindow(object):
                 button = QtWidgets.QPushButton(value)
                 self.verticalLayout_2.addWidget(button)
                 button.clicked.connect(lambda state, id = nick: dialog(id))
+
+        new_message_button = QtWidgets.QPushButton("Написать")
+        new_message_button.clicked.connect(lambda: new())
+        self.verticalLayout_2.addWidget(new_message_button)
+
+        def new():
+            text, ok = QtWidgets.QInputDialog.getText(self, "Новое сообщение", "Никнейм")
+
+            if ok and text != "" and text != " ":
+                dialog(text)
 
         def dialog(id):
 
@@ -639,7 +651,6 @@ class Ui_MainWindow(object):
                 dialog(id)
 
 
-
 class Message(object):
     def show(self, Title, Text):
         msgbox = QtWidgets.QMessageBox()
@@ -647,6 +658,12 @@ class Message(object):
         msgbox.setWindowIcon(QtGui.QIcon(QtGui.QPixmap('icons/i.png')))
         msgbox.setText(Text)
         msgbox.exec()
+
+    def line(self):
+        text, ok = QtWidgets.QInputDialog.getText(self)
+
+        if ok and text != "" and text != " ":
+            return(text)
 
 
 if __name__ == "__main__":
