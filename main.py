@@ -28,8 +28,15 @@ except BaseException as e:
     msgbox.setDetailedText(str(e))
     msgbox.exec()
 
+playlist = QtMultimedia.QMediaPlaylist()
+playlist.setPlaybackMode(QtMultimedia.QMediaPlaylist.Loop)
+
+player = QtMultimedia.QMediaPlayer()
+player.setPlaylist(playlist)
+
 
 class Ui_MainWindow(QtWidgets.QWidget):
+
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
         MainWindow.resize(1280, 720)
@@ -83,6 +90,23 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.statusbar.setObjectName("statusbar")
         MainWindow.setStatusBar(self.statusbar)
 
+        self.groupBox_2 = QtWidgets.QGroupBox(self.centralwidget)
+        self.groupBox_2.setTitle("")
+        self.groupBox_2.setObjectName("groupBox_2")
+        self.horizontalLayout = QtWidgets.QHBoxLayout(self.groupBox_2)
+        self.horizontalLayout.setObjectName("horizontalLayout")
+        self.label = QtWidgets.QLabel(self.groupBox_2)
+        self.label.setObjectName("label")
+        self.horizontalLayout.addWidget(self.label)
+        self.pushButton_6 = QtWidgets.QPushButton(self.groupBox_2)
+        self.pushButton_6.setText("Прослушать")
+        self.pushButton_6.setObjectName("pushButton_6")
+        self.horizontalLayout.addWidget(self.pushButton_6)
+        self.gridLayout.addWidget(self.groupBox_2, 3, 0, 1, 5)
+
+
+        self.groupBox_2.setVisible(False)
+
         self.retranslateUi(MainWindow)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
@@ -101,8 +125,18 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.beatsbutton.clicked.connect(self.beats)
         self.searchbutton.clicked.connect(self.search)
         self.newsbutton.clicked.connect(self.news)
+        self.pushButton_6.clicked.connect(self.launch)
         
         self.beats()
+
+    def launch(self):
+        global player
+        if self.pushButton_6.text() == "Прослушать":
+            player.play()
+            self.pushButton_6.setText("Приостановить")
+        else:
+            player.stop()
+            self.pushButton_6.setText("Прослушать")
 
     def cleanlayout(self):
         for i in reversed(range(self.gridLayout_2.count())):
@@ -343,7 +377,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
         for item in cursor:
             item_group = QtWidgets.QGroupBox(" ")
             categorieslayout = QtWidgets.QGridLayout(item_group)
-            self.gridLayout_2.addWidget(item_group)
+            self.gridLayout_2.addWidget(item_group, i, 0, 1, 1)
             for value in item:
                 value = str(value)
                 if j == 0:
@@ -353,6 +387,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
                 if j == 6:
                     continue
             button = QtWidgets.QPushButton("Прослушать")
+            #button.setIcon(QtGui.QIcon("play.svg"))
             button.clicked.connect(lambda state, item = beat: play(item))
             categorieslayout.addWidget(button, i, j, 1, 1)
             button = QtWidgets.QPushButton("Приобрести")
@@ -362,14 +397,26 @@ class Ui_MainWindow(QtWidgets.QWidget):
             j = 0
 
         def play(id):
-            playlist = QtMultimedia.QMediaPlaylist()
-            url = QtCore.QUrl.fromLocalFile("./sound2.mp3")
-            playlist.addMedia(QtMultimedia.QMediaContent(url))
-            playlist.setPlaybackMode(QtMultimedia.QMediaPlaylist.Loop)
 
-            player = QtMultimedia.QMediaPlayer()
-            player.setPlaylist(playlist)
+            if self.groupBox_2.isVisible():
+                pass
+            else:
+                self.groupBox_2.setVisible(True)
+
+            global playlist
+            global player
+
+            url = QtCore.QUrl.fromLocalFile("./" + id + ".mp3")
+            playlist.addMedia(QtMultimedia.QMediaContent(url))
+
+            query = "update samples set amount = amount + 1 where s_name = %s;"
+            data = (id, )
+            cursor.execute(query, data)
+            cnx.commit()
+
             player.play()
+            self.pushButton_6.setText("Приостановить")
+            self.label.setText(id)
 
     def search(self):
         self.cleanlayout()
@@ -659,17 +706,32 @@ class Message(object):
         msgbox.setText(Text)
         msgbox.exec()
 
-    def line(self):
-        text, ok = QtWidgets.QInputDialog.getText(self)
-
-        if ok and text != "" and text != " ":
-            return(text)
-
 
 if __name__ == "__main__":
     import sys
     app = QtWidgets.QApplication(sys.argv)
     app.setStyle("Fusion")
+
+    dark_palette = QtGui.QPalette()
+
+    dark_palette.setColor(QtGui.QPalette.Window, QtGui.QColor(53, 53, 53))
+    dark_palette.setColor(QtGui.QPalette.WindowText,  QtGui.QColor(255, 255, 255))
+    dark_palette.setColor(QtGui.QPalette.Base, QtGui.QColor(25, 25, 25))
+    dark_palette.setColor(QtGui.QPalette.AlternateBase, QtGui.QColor(53, 53, 53))
+    dark_palette.setColor(QtGui.QPalette.ToolTipBase, QtGui.QColor(255, 255, 255))
+    dark_palette.setColor(QtGui.QPalette.ToolTipText, QtGui.QColor(255, 255, 255))
+    dark_palette.setColor(QtGui.QPalette.Text, QtGui.QColor(255, 255, 255))
+    dark_palette.setColor(QtGui.QPalette.Button, QtGui.QColor(0, 140, 0))
+    dark_palette.setColor(QtGui.QPalette.ButtonText, QtGui.QColor(0, 0, 0))
+    dark_palette.setColor(QtGui.QPalette.BrightText, QtGui.QColor(255, 255, 255))
+    dark_palette.setColor(QtGui.QPalette.Link, QtGui.QColor(42, 130, 218))
+    dark_palette.setColor(QtGui.QPalette.Highlight, QtGui.QColor(42, 130, 218))
+    dark_palette.setColor(QtGui.QPalette.HighlightedText, QtGui.QColor(0, 0, 0))
+
+    app.setPalette(dark_palette)
+
+    app.setStyleSheet("QToolTip { color: #ffffff; background-color: #2a82da; border: 1px solid white; }")
+
     MainWindow = QtWidgets.QMainWindow()
     ui = Ui_MainWindow()
     ui.setupUi(MainWindow)
