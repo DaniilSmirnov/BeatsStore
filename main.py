@@ -4,7 +4,7 @@ from PyQt5.QtCore import QTimer
 
 authorized = True #ИЗМЕНИТЬ НА FALSE
 
-user_id = 1
+user_id = 2
 
 try:
     cnx = mysql.connector.connect(user='root', password='i130813',
@@ -259,6 +259,37 @@ class Ui_MainWindow(QtWidgets.QWidget):
                     i += 1
                     j = 0
 
+            def user(i, j):
+                k = 0
+                i += 1
+                query = "select s_id, s_name, au_name, upload_date from samples where au_name = %s order by amount desc;"
+                data = (nick, )
+                cursor.execute(query, data)
+                for item in cursor:
+                    for value in item:
+                        value = str(value)
+                        if k == 0:
+                            id = value
+                            k += 1
+                            continue
+                        self.gridLayout_2.addWidget(QtWidgets.QLabel(value), i, j, 1, 1)
+                        j += 1
+                    button = QtWidgets.QPushButton("Удалить")
+                    self.gridLayout_2.addWidget(button, i, j + 1, 1, 1)
+                    button.clicked.connect(lambda state, line=id: delete_beat(line))
+                    j = 0
+                    i += 1
+                    k = 0
+
+                def delete_beat(id):
+                    data = (id,)
+                    query = "delete from samples where s_id = %s"
+                    cursor.execute(query, data)
+                    cnx.commit()
+
+                    self.profile()
+
+
             query = "select acc_type from user_acc where u_id = %s"
             data = (user_id, )
             cursor.execute(query, data)
@@ -267,6 +298,9 @@ class Ui_MainWindow(QtWidgets.QWidget):
                     value = str(value)
                     if value == "admin":
                         admin(j, i)
+                    else:
+                        user(j, i)
+
 
         else:
             self.label_2 = QtWidgets.QLabel()
