@@ -121,10 +121,20 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.newsbutton.setText(_translate("MainWindow", "Новости"))
 
         self.profilebutton.clicked.connect(self.profile)
+        self.profilebutton.setStyleSheet("background-color: #353535; border: 0px;")
+
         self.basketbutton.clicked.connect(self.basket)
+        self.basketbutton.setStyleSheet("background-color: #353535; border: 0px;")
+
         self.beatsbutton.clicked.connect(self.beats)
+        self.beatsbutton.setStyleSheet("background-color: #353535; border: 0px;")
+
         self.searchbutton.clicked.connect(self.search)
+        self.searchbutton.setStyleSheet("background-color: #353535; border: 0px;")
+
         self.newsbutton.clicked.connect(self.news)
+        self.newsbutton.setStyleSheet("background-color: #353535; border: 0px;")
+
         self.pushButton_6.clicked.connect(self.launch)
         
         self.beats()
@@ -391,6 +401,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
             button.clicked.connect(lambda state, item = beat: play(item))
             categorieslayout.addWidget(button, i, j, 1, 1)
             button = QtWidgets.QPushButton("Приобрести")
+            button.setStyleSheet("background-color: #cc0000;")
             button.clicked.connect(lambda state, beat=id: play(id))
             categorieslayout.addWidget(button, i, j+1, 1, 1)
             i += 1
@@ -421,6 +432,82 @@ class Ui_MainWindow(QtWidgets.QWidget):
     def search(self):
         self.cleanlayout()
         self.groupBox.setTitle("Поиск")
+
+        self.lineEdit = QtWidgets.QLineEdit(self.scrollAreaWidgetContents)
+        self.lineEdit.setObjectName("lineEdit")
+        self.gridLayout_2.addWidget(self.lineEdit, 0, 0, 1, 1)
+        self.comboBox = QtWidgets.QComboBox(self.scrollAreaWidgetContents)
+        self.comboBox.setObjectName("comboBox")
+        self.gridLayout_2.addWidget(self.comboBox, 0, 1, 1, 1)
+        self.pushButton_7 = QtWidgets.QPushButton(self.scrollAreaWidgetContents)
+        self.pushButton_7.setObjectName("pushButton_7")
+        self.gridLayout_2.addWidget(self.pushButton_7, 0, 2, 1, 1)
+        self.pushButton_7.setText("Найти")
+
+        self.comboBox.addItem("Ник")
+        self.comboBox.addItem("Жанр")
+        self.comboBox.addItem("Название")
+
+        def result():
+            data = (self.lineEdit.text(), )
+            if self.comboBox.currentIndex() == 0:
+                query = "select s_name, au_name, style, price, upload_date from samples where au_name = %s order by amount desc;"
+            if self.comboBox.currentIndex() == 1:
+                query = "select s_name, au_name, style, price, upload_date from samples where style = %s order by amount desc;"
+            if self.comboBox.currentIndex() == 2:
+                query = "select s_name, au_name, style, price, upload_date from samples where s_name = %s order by amount desc;"
+
+            cursor.execute(query, data)
+
+            j = 0
+            i = 1
+
+            for item in cursor:
+                item_group = QtWidgets.QGroupBox(" ")
+                categorieslayout = QtWidgets.QGridLayout(item_group)
+                self.gridLayout_2.addWidget(item_group, i, 0, 1, 1)
+                for value in item:
+                    value = str(value)
+                    if j == 0:
+                        beat = value
+                    categorieslayout.addWidget(QtWidgets.QLabel(value), i, j, 1, 1)
+                    j += 1
+                    if j == 6:
+                        continue
+                button = QtWidgets.QPushButton("Прослушать")
+                # button.setIcon(QtGui.QIcon("play.svg"))
+                button.clicked.connect(lambda state, item=beat: play(item))
+                categorieslayout.addWidget(button, i, j, 1, 1)
+                button = QtWidgets.QPushButton("Приобрести")
+                button.setStyleSheet("background-color: #cc0000;")
+                button.clicked.connect(lambda state, beat=id: play(id))
+                categorieslayout.addWidget(button, i, j + 1, 1, 1)
+                i += 1
+                j = 0
+
+            def play(id):
+
+                if self.groupBox_2.isVisible():
+                    pass
+                else:
+                    self.groupBox_2.setVisible(True)
+
+                global playlist
+                global player
+
+                url = QtCore.QUrl.fromLocalFile("./" + id + ".mp3")
+                playlist.addMedia(QtMultimedia.QMediaContent(url))
+
+                query = "update samples set amount = amount + 1 where s_name = %s;"
+                data = (id,)
+                cursor.execute(query, data)
+                cnx.commit()
+
+                player.play()
+                self.pushButton_6.setText("Приостановить")
+                self.label.setText(id)
+
+        self.pushButton_7.clicked.connect(result)
 
     def news(self):
         self.cleanlayout()
@@ -721,8 +808,8 @@ if __name__ == "__main__":
     dark_palette.setColor(QtGui.QPalette.ToolTipBase, QtGui.QColor(255, 255, 255))
     dark_palette.setColor(QtGui.QPalette.ToolTipText, QtGui.QColor(255, 255, 255))
     dark_palette.setColor(QtGui.QPalette.Text, QtGui.QColor(255, 255, 255))
-    dark_palette.setColor(QtGui.QPalette.Button, QtGui.QColor(0, 140, 0))
-    dark_palette.setColor(QtGui.QPalette.ButtonText, QtGui.QColor(0, 0, 0))
+    dark_palette.setColor(QtGui.QPalette.Button, QtGui.QColor(0, 100, 0))
+    dark_palette.setColor(QtGui.QPalette.ButtonText, QtGui.QColor(255, 255, 255))
     dark_palette.setColor(QtGui.QPalette.BrightText, QtGui.QColor(255, 255, 255))
     dark_palette.setColor(QtGui.QPalette.Link, QtGui.QColor(42, 130, 218))
     dark_palette.setColor(QtGui.QPalette.Highlight, QtGui.QColor(42, 130, 218))
@@ -730,7 +817,12 @@ if __name__ == "__main__":
 
     app.setPalette(dark_palette)
 
-    app.setStyleSheet("QToolTip { color: #ffffff; background-color: #2a82da; border: 1px solid white; }")
+    app.setStyleSheet("QToolTip { color: #ffffff; background-color: #2a82da; border: 2px solid white; }")
+
+    font = QtGui.QFont("Rostov")
+    font.setPointSize(18)
+
+    app.setFont(font)
 
     MainWindow = QtWidgets.QMainWindow()
     ui = Ui_MainWindow()
