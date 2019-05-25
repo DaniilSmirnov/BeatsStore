@@ -371,18 +371,8 @@ class Ui_MainWindow(QtWidgets.QWidget):
         i = 0
         j = 0
 
-        '''
-        labels = ["Название", "Автор", "Cтиль", "Цена", "Дата загрузки"]
-        for label in labels:
-            self.gridLayout_2.addWidget(QtWidgets.QLabel(label), i, j, 1, 1)
-            j += 1
-
-        '''
-        query = "select s_name, au_name, style, price, upload_date from samples order by amount desc;"
+        query = "select s_name, au_name, style, price, upload_date, amount from samples order by amount desc;"
         cursor.execute(query)
-
-        j = 0
-        i = 1
 
         for item in cursor:
             item_group = QtWidgets.QGroupBox(" ")
@@ -392,10 +382,15 @@ class Ui_MainWindow(QtWidgets.QWidget):
                 value = str(value)
                 if j == 0:
                     beat = value
-                categorieslayout.addWidget(QtWidgets.QLabel(value), i, j, 1, 1)
+                if j == 2:
+                    style = value
+                    button = QtWidgets.QPushButton(value)
+                    button.setStyleSheet("background-color: #353535; border: 0px;")
+                    categorieslayout.addWidget(button, i, j, 1, 1)
+                    button.clicked.connect(lambda state, line = style: display_style(line))
+                else:
+                    categorieslayout.addWidget(QtWidgets.QLabel(value), i, j, 1, 1)
                 j += 1
-                if j == 6:
-                    continue
             button = QtWidgets.QPushButton("Прослушать")
             #button.setIcon(QtGui.QIcon("play.svg"))
             button.clicked.connect(lambda state, item = beat: play(item))
@@ -406,6 +401,61 @@ class Ui_MainWindow(QtWidgets.QWidget):
             categorieslayout.addWidget(button, i, j+1, 1, 1)
             i += 1
             j = 0
+
+        def display_style(style):
+            self.cleanlayout()
+
+            query = "select s_name, au_name, style, price, upload_date from samples where style = %s order by amount desc;"
+
+            self.groupBox.setTitle("Лучшее в жанре " + style)
+            data = (style, )
+            cursor.execute(query, data)
+
+            j = 0
+            i = 1
+
+            for item in cursor:
+                item_group = QtWidgets.QGroupBox(" ")
+                categorieslayout = QtWidgets.QGridLayout(item_group)
+                self.gridLayout_2.addWidget(item_group, i, 0, 1, 1)
+                for value in item:
+                    value = str(value)
+                    if j == 0:
+                        beat = value
+                    categorieslayout.addWidget(QtWidgets.QLabel(value), i, j, 1, 1)
+                    j += 1
+                button = QtWidgets.QPushButton("Прослушать")
+                # button.setIcon(QtGui.QIcon("play.svg"))
+                button.clicked.connect(lambda state, item=beat: play(item))
+                categorieslayout.addWidget(button, i, j, 1, 1)
+                button = QtWidgets.QPushButton("Приобрести")
+                button.setStyleSheet("background-color: #cc0000;")
+                button.clicked.connect(lambda state, beat=id: play(id))
+                categorieslayout.addWidget(button, i, j + 1, 1, 1)
+                i += 1
+                j = 0
+
+            def play(id):
+
+                if self.groupBox_2.isVisible():
+                    pass
+                else:
+                    self.groupBox_2.setVisible(True)
+
+                global playlist
+                global player
+
+                url = QtCore.QUrl.fromLocalFile("./" + id + ".mp3")
+                playlist.addMedia(QtMultimedia.QMediaContent(url))
+
+                query = "update samples set amount = amount + 1 where s_name = %s;"
+                data = (id,)
+                cursor.execute(query, data)
+                cnx.commit()
+
+                player.play()
+                self.pushButton_6.setText("Приостановить")
+                self.label.setText(id)
 
         def play(id):
 
@@ -472,8 +522,6 @@ class Ui_MainWindow(QtWidgets.QWidget):
                         beat = value
                     categorieslayout.addWidget(QtWidgets.QLabel(value), i, j, 1, 1)
                     j += 1
-                    if j == 6:
-                        continue
                 button = QtWidgets.QPushButton("Прослушать")
                 # button.setIcon(QtGui.QIcon("play.svg"))
                 button.clicked.connect(lambda state, item=beat: play(item))
