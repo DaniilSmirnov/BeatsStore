@@ -28,6 +28,8 @@ except BaseException as e:
     msgbox.setDetailedText(str(e))
     msgbox.exec()
 
+basket = []
+
 playlist = QtMultimedia.QMediaPlaylist()
 playlist.setPlaybackMode(QtMultimedia.QMediaPlaylist.Loop)
 
@@ -289,7 +291,6 @@ class Ui_MainWindow(QtWidgets.QWidget):
 
                     self.profile()
 
-
             query = "select acc_type from user_acc where u_id = %s"
             data = (user_id, )
             cursor.execute(query, data)
@@ -300,7 +301,6 @@ class Ui_MainWindow(QtWidgets.QWidget):
                         admin(j, i)
                     else:
                         user(j, i)
-
 
         else:
             self.label_2 = QtWidgets.QLabel()
@@ -359,6 +359,10 @@ class Ui_MainWindow(QtWidgets.QWidget):
             self.login.setObjectName("loginbutton")
             self.gridLayout_2.addWidget(self.login, 3, 1, 1, 1)
 
+            reg_button = QtWidgets.QPushButton("Регистрация")
+            reg_button.clicked.connect(self.reg)
+            self.gridLayout_2.addWidget(reg_button, 4, 1, 1, 1)
+
             self.label_2.setText(("Логин"))
             self.label.setText(("Авторизация"))
             self.label_3.setText(("Пароль"))
@@ -399,6 +403,28 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.cleanlayout()
         self.groupBox.setTitle("Корзина")
 
+        i = 0
+        j = 0
+
+        for track in basket:
+            query = "select s_name, au_name, style, price, upload_date, amount from samples where s_name = %s;"
+            data = (track, )
+            cursor.execute(query, data)
+            for item in cursor:
+                item_group = QtWidgets.QGroupBox(" ")
+                categorieslayout = QtWidgets.QGridLayout(item_group)
+                self.gridLayout_2.addWidget(item_group, i, 0, 1, 1)
+                for value in item:
+                    value = str(value)
+                    categorieslayout.addWidget(QtWidgets.QLabel(value), i, j, 1, 1)
+                    j += 1
+                i += 1
+                j = 0
+
+        pay_button = QtWidgets.QPushButton("Оплатить")
+        pay_button.clicked.connect(self.placeholder)
+        self.gridLayout_2.addWidget(pay_button, i, j, 1, 1)
+
     def beats(self):
         self.cleanlayout()
 
@@ -416,6 +442,8 @@ class Ui_MainWindow(QtWidgets.QWidget):
                 value = str(value)
                 if j == 0:
                     beat = value
+                    categorieslayout.addWidget(QtWidgets.QLabel(str(i+1)), i, j, 1, 1)
+                    j += 1
                 if j == 2:
                     style = value
                     button = QtWidgets.QPushButton(value)
@@ -431,7 +459,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
             categorieslayout.addWidget(button, i, j, 1, 1)
             button = QtWidgets.QPushButton("Приобрести")
             button.setStyleSheet("background-color: #cc0000;")
-            button.clicked.connect(lambda state, beat=id: play(id))
+            button.clicked.connect(lambda state, item = beat: buy(item))
             categorieslayout.addWidget(button, i, j+1, 1, 1)
             i += 1
             j = 0
@@ -512,6 +540,9 @@ class Ui_MainWindow(QtWidgets.QWidget):
             player.play()
             self.pushButton_6.setText("Приостановить")
             self.label.setText(id)
+
+        def buy(id):
+            basket.append(id)
 
     def search(self):
         self.cleanlayout()
@@ -865,6 +896,118 @@ class Ui_MainWindow(QtWidgets.QWidget):
                         id = str(value)
 
                 dialog(id)
+
+    def placeholder(self):
+        self.cleanlayout()
+        self.gridLayout_2.addWidget(QtWidgets.QLabel("Оплачено успешно"), 0, 0, 1, 1)
+
+        global user_id
+
+        for s_name in basket:
+            query = "insert into purchase values (default, %s, %s, now())"
+            data = (s_name, user_id)
+            cursor.execute(query, data)
+            cnx.commit()
+
+    def reg(self):
+
+        self.cleanlayout()
+
+        self.lineEdit_2 = QtWidgets.QLineEdit(self.scrollAreaWidgetContents)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Fixed)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.lineEdit_2.sizePolicy().hasHeightForWidth())
+        self.lineEdit_2.setSizePolicy(sizePolicy)
+        self.lineEdit_2.setObjectName("lineEdit_2")
+        self.gridLayout_2.addWidget(self.lineEdit_2, 1, 1, 1, 1)
+        self.lineEdit_6 = QtWidgets.QLineEdit(self.scrollAreaWidgetContents)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Maximum)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.lineEdit_6.sizePolicy().hasHeightForWidth())
+        self.lineEdit_6.setSizePolicy(sizePolicy)
+        self.lineEdit_6.setObjectName("lineEdit_6")
+        self.gridLayout_2.addWidget(self.lineEdit_6, 5, 1, 1, 1)
+        self.lineEdit_3 = QtWidgets.QLineEdit(self.scrollAreaWidgetContents)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Fixed)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.lineEdit_3.sizePolicy().hasHeightForWidth())
+        self.lineEdit_3.setSizePolicy(sizePolicy)
+        self.lineEdit_3.setObjectName("lineEdit_3")
+        self.gridLayout_2.addWidget(self.lineEdit_3, 2, 1, 1, 1)
+        self.lineEdit = QtWidgets.QLineEdit(self.scrollAreaWidgetContents)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Fixed)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.lineEdit.sizePolicy().hasHeightForWidth())
+        self.lineEdit.setSizePolicy(sizePolicy)
+        self.lineEdit.setObjectName("lineEdit")
+        self.gridLayout_2.addWidget(self.lineEdit, 0, 1, 1, 1)
+        self.lineEdit_4 = QtWidgets.QLineEdit(self.scrollAreaWidgetContents)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Fixed)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.lineEdit_4.sizePolicy().hasHeightForWidth())
+        self.lineEdit_4.setSizePolicy(sizePolicy)
+        self.lineEdit_4.setObjectName("lineEdit_4")
+        self.gridLayout_2.addWidget(self.lineEdit_4, 3, 1, 1, 1)
+        self.lineEdit_5 = QtWidgets.QLineEdit(self.scrollAreaWidgetContents)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Fixed)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.lineEdit_5.sizePolicy().hasHeightForWidth())
+        self.lineEdit_5.setSizePolicy(sizePolicy)
+        self.lineEdit_5.setObjectName("lineEdit_5")
+        self.gridLayout_2.addWidget(self.lineEdit_5, 4, 1, 1, 1)
+        self.pushButton_6 = QtWidgets.QPushButton(self.scrollAreaWidgetContents)
+        self.pushButton_6.setObjectName("pushButton_6")
+        self.gridLayout_2.addWidget(self.pushButton_6, 8, 1, 1, 1)
+
+        self.lineEdit_7 = QtWidgets.QLineEdit()
+        self.gridLayout_2.addWidget(self.lineEdit_7, 6, 1, 1, 1)
+
+        self.lineEdit_8 = QtWidgets.QLineEdit()
+        self.gridLayout_2.addWidget(self.lineEdit_8, 7, 1, 1, 1)
+
+        for j in range(8):
+            value = ""
+            if j == 0:
+                self.gridLayout_2.addWidget(QtWidgets.QLabel("Имя "), j, 0, 1, 1)
+                self.lineEdit.setText(value)
+            if j == 1:
+                self.gridLayout_2.addWidget(QtWidgets.QLabel("Фамилия "), j, 0, 1, 1)
+                self.lineEdit_2.setText(value)
+            if j == 2:
+                self.gridLayout_2.addWidget(QtWidgets.QLabel("Никнейм "), j, 0, 1, 1)
+                self.lineEdit_3.setText(value)
+            if j == 3:
+                self.gridLayout_2.addWidget(QtWidgets.QLabel("Cтрана "), j, 0, 1, 1)
+                self.lineEdit_4.setText(value)
+            if j == 4:
+                self.gridLayout_2.addWidget(QtWidgets.QLabel("Город "), j, 0, 1, 1)
+                self.lineEdit_5.setText(value)
+            if j == 5:
+                self.gridLayout_2.addWidget(QtWidgets.QLabel("О себе "), j, 0, 1, 1)
+                self.lineEdit_6.setText(value)
+            if j == 6:
+                self.gridLayout_2.addWidget(QtWidgets.QLabel("Email "), j, 0, 1, 1)
+                self.lineEdit_7.setText(value)
+            if j == 7:
+                self.gridLayout_2.addWidget(QtWidgets.QLabel("Пароль "), j, 0, 1, 1)
+                self.lineEdit_8.setText(value)
+
+        self.pushButton_6.setText("Зарегистрироваться")
+        self.pushButton_6.clicked.connect(lambda: mod())
+
+        def mod():
+            data = (self.lineEdit_7, self.lineEdit_8.text(), self.lineEdit.text(), self.lineEdit_2.text(), self.lineEdit_3.text(), self.lineEdit_4.text(),
+                    self.lineEdit_5.text(),self.lineEdit_5, self.lineEdit_6.text())
+            query = "Insert into user_acc values (default, %s, %s, %s, %s, %s, %s, %s, %s, %s, now(), 'user';"
+            cursor.execute(query, data)
+            cnx.commit()
+            self.profile()
 
 
 class Message(object):
