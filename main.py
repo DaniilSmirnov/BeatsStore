@@ -2,9 +2,9 @@ from PyQt5 import QtCore, QtGui, QtWidgets, QtMultimedia, QtMultimediaWidgets
 import mysql.connector
 from PyQt5.QtCore import QTimer
 
-authorized = True #ИЗМЕНИТЬ НА FALSE
+authorized = False #ИЗМЕНИТЬ НА FALSE
 
-user_id = 2
+user_id = 1
 
 try:
     cnx = mysql.connector.connect(user='root', password='i130813',
@@ -27,6 +27,8 @@ except BaseException as e:
     msgbox.setTextInteractionFlags(QtCore.Qt.NoTextInteraction)
     msgbox.setDetailedText(str(e))
     msgbox.exec()
+
+nick = " "
 
 basket = []
 
@@ -103,9 +105,9 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.pushButton_6 = QtWidgets.QPushButton(self.groupBox_2)
         self.pushButton_6.setText("Прослушать")
         self.pushButton_6.setObjectName("pushButton_6")
+        self.pushButton_6.setStyleSheet("background-color: #353535; border: 0px;")
         self.horizontalLayout.addWidget(self.pushButton_6)
         self.gridLayout.addWidget(self.groupBox_2, 3, 0, 1, 5)
-
 
         self.groupBox_2.setVisible(False)
 
@@ -146,6 +148,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
         if self.pushButton_6.text() == "Прослушать":
             player.play()
             self.pushButton_6.setText("Приостановить")
+            self.pushButton_6.setStyleSheet("background-color: #cc0000;")
         else:
             player.stop()
             self.pushButton_6.setText("Прослушать")
@@ -180,7 +183,8 @@ class Ui_MainWindow(QtWidgets.QWidget):
                         self.gridLayout_2.addWidget(QtWidgets.QLabel("Фамилия " + value), j, 0, 1, 1)
                     if j == 2:
                         self.gridLayout_2.addWidget(QtWidgets.QLabel("Никнейм " + value), j, 0, 1, 1)
-                        self.profilebutton.setText("Вы авторизованы как " + value)
+                        self.profilebutton.setText(value)
+                        global nick
                         nick = value
                     if j == 3:
                         self.gridLayout_2.addWidget(QtWidgets.QLabel("Cтрана " + value), j, 0, 1, 1)
@@ -225,6 +229,11 @@ class Ui_MainWindow(QtWidgets.QWidget):
                     button = QtWidgets.QPushButton("Удалить")
                     self.gridLayout_2.addWidget(button, i, j+1, 1, 1)
                     button.clicked.connect(lambda state, line=id: delete_beat(line))
+                    j += 1
+                    button = QtWidgets.QPushButton("Статистика продаж")
+                    self.gridLayout_2.addWidget(button, i, j + 1, 1, 1)
+                    button.clicked.connect(lambda state, line=id: info_beat(line))
+
                     j = 0
                     i += 1
                     k = 0
@@ -237,6 +246,14 @@ class Ui_MainWindow(QtWidgets.QWidget):
 
                     self.profile()
 
+                def info_beat(id):
+                    query = "select count(b_id) from purchase where t_id = %s;"
+                    data = (id,)
+                    cursor.execute(query, data)
+                    for item in cursor:
+                        for value in item:
+                            Message.show(Message, "Инфо", "Трек продан " + str(value) + " раз")
+
                 def delete_news(id):
                     data = (id, )
                     query = "delete from news where idnews = %s"
@@ -247,6 +264,10 @@ class Ui_MainWindow(QtWidgets.QWidget):
 
                 query = "select idnews, title, body from news;"
                 cursor.execute(query)
+
+                self.gridLayout_2.addWidget(QtWidgets.QLabel("НОВОСТИ"), i, j, 1, 5)
+
+                i += 1
 
                 for item in cursor:
                     for value in item:
@@ -261,10 +282,15 @@ class Ui_MainWindow(QtWidgets.QWidget):
                     i += 1
                     j = 0
 
+                news_button = QtWidgets.QPushButton("Добавить новость")
+                news_button.clicked.connect(self.addnews)
+                self.gridLayout_2.addWidget(news_button, i, 0, 1, 1)
+                i += 1
+
             def user(i, j):
                 k = 0
                 i += 1
-                query = "select s_id, s_name, au_name, upload_date from samples where au_name = %s order by amount desc;"
+                query = "select s_id, s_name, au_name, upload_date, amount  from samples where au_name = %s order by amount desc;"
                 data = (nick, )
                 cursor.execute(query, data)
                 for item in cursor:
@@ -279,6 +305,15 @@ class Ui_MainWindow(QtWidgets.QWidget):
                     button = QtWidgets.QPushButton("Удалить")
                     self.gridLayout_2.addWidget(button, i, j + 1, 1, 1)
                     button.clicked.connect(lambda state, line=id: delete_beat(line))
+                    j += 1
+                    button = QtWidgets.QPushButton("Статистика продаж")
+                    self.gridLayout_2.addWidget(button, i, j + 1, 1, 1)
+                    button.clicked.connect(lambda state, line = id: info_beat(line))
+                    j += 1
+                    button = QtWidgets.QPushButton("Изменить данные")
+                    self.gridLayout_2.addWidget(button, i, j + 1, 1, 1)
+                    button.clicked.connect(lambda  state, line = id: mod_beat(line))
+
                     j = 0
                     i += 1
                     k = 0
@@ -291,6 +326,77 @@ class Ui_MainWindow(QtWidgets.QWidget):
 
                     self.profile()
 
+                def info_beat(id):
+                    query = "select count(b_id) from purchase where t_id = %s;"
+                    data = (id, )
+                    cursor.execute(query, data)
+                    for item in cursor:
+                        for value in item:
+                            Message.show(Message, "Инфо", "Трек продан " + str(value) + " раз")
+
+                def mod_beat(id):
+
+                    track = id
+
+                    self.cleanlayout()
+
+                    self.label_2 = QtWidgets.QLabel(self.groupBox)
+                    self.label_2.setText("Название трека")
+                    self.gridLayout_2.addWidget(self.label_2, 0, 0, 1, 1)
+                    self.label = QtWidgets.QLabel(self.groupBox)
+                    self.label.setText("Стиль")
+                    self.gridLayout_2.addWidget(self.label, 0, 1, 1, 1)
+                    self.lineEdit = QtWidgets.QLineEdit(self.groupBox)
+                    self.gridLayout_2.addWidget(self.lineEdit, 1, 0, 1, 1)
+                    self.label_4 = QtWidgets.QLabel(self.groupBox)
+                    self.label_4.setText("Цена")
+                    self.gridLayout_2.addWidget(self.label_4, 0, 2, 1, 1)
+                    self.lineEdit_2 = QtWidgets.QComboBox(self.groupBox)
+                    self.lineEdit_2.addItem("Pop")
+                    self.lineEdit_2.addItem("Hip-hop")
+                    self.lineEdit_2.addItem("R&B")
+                    self.lineEdit_2.addItem("Electronic")
+                    self.lineEdit_2.addItem("World")
+                    self.gridLayout_2.addWidget(self.lineEdit_2, 1, 1, 1, 1)
+                    self.lineEdit_4 = QtWidgets.QLineEdit(self.groupBox)
+                    self.gridLayout_2.addWidget(self.lineEdit_4, 1, 2, 1, 1)
+
+                    button = QtWidgets.QPushButton("Добавить")
+                    self.gridLayout_2.addWidget(button, 2, 0, 2, 2)
+
+                    def adder():
+
+                        global track
+
+                        try:
+                            query = "update samples set name = %s, style = %s, price = %s where s_id = %s"
+                            data = (self.lineEdit.text(), self.lineEdit_2.itemText(self.lineEdit_2.currentIndex()), self.lineEdit_4.text(), track)
+                            cursor.execute(query, data)
+                        except BaseException:
+                            pass
+
+                        try:
+
+                            text = QtWidgets.QFileDialog.getOpenFileName(self, "Загрузка трека", 'C://Users')
+
+                            if text != "" and text != " ":
+                                import os
+                                os.rename(text[0], "./" + self.lineEdit.text() + ".mp3")
+
+                            text = QtWidgets.QFileDialog.getOpenFileName(self, "Загрузка изображения", 'C://Users')
+
+                            if text != "" and text != " ":
+                                import os
+                                os.rename(text[0], "./" + self.lineEdit.text() + ".jpg")
+
+                        except BaseException:
+                            pass
+
+                        self.beats()
+                        cnx.commit()
+
+                    button.clicked.connect(adder)
+
             query = "select acc_type from user_acc where u_id = %s"
             data = (user_id, )
             cursor.execute(query, data)
@@ -301,6 +407,21 @@ class Ui_MainWindow(QtWidgets.QWidget):
                         admin(j, i)
                     else:
                         user(j, i)
+
+            ex_button = QtWidgets.QPushButton("Выйти")
+            self.gridLayout_2.addWidget(ex_button, j, 0, 1, 1)
+
+            def ex():
+                global user_id
+                global authorized
+
+                user_id = 0
+                authorized = False
+
+                self.profile()
+
+            ex_button.clicked.connect(ex)
+
 
         else:
             self.label_2 = QtWidgets.QLabel()
@@ -418,8 +539,15 @@ class Ui_MainWindow(QtWidgets.QWidget):
                     value = str(value)
                     categorieslayout.addWidget(QtWidgets.QLabel(value), i, j, 1, 1)
                     j += 1
+                button = QtWidgets.QPushButton("Удалить")
+                categorieslayout.addWidget(button, i, j+1, 1, 1)
+                button.clicked.connect(lambda state, id = track: pop(id))
                 i += 1
                 j = 0
+
+        def pop(track):
+            basket.pop(basket.index(track))
+            self.basket()
 
         pay_button = QtWidgets.QPushButton("Оплатить")
         pay_button.clicked.connect(self.placeholder)
@@ -428,7 +556,19 @@ class Ui_MainWindow(QtWidgets.QWidget):
     def beats(self):
         self.cleanlayout()
 
+        '''
         i = 0
+        j = 0
+
+        labels = ["#", "Название", "Автор", "Жанр", "Цена", "Дата загрузки", "Прослушивания"]
+
+        for label in labels:
+            self.gridLayout_2.addWidget(QtWidgets.QLabel(label), i, j, 1, 1)
+            j += 1
+        
+        '''
+
+        i = 1
         j = 0
 
         query = "select s_name, au_name, style, price, upload_date, amount from samples order by amount desc;"
@@ -437,20 +577,31 @@ class Ui_MainWindow(QtWidgets.QWidget):
         for item in cursor:
             item_group = QtWidgets.QGroupBox(" ")
             categorieslayout = QtWidgets.QGridLayout(item_group)
-            self.gridLayout_2.addWidget(item_group, i, 0, 1, 1)
+            self.gridLayout_2.addWidget(item_group, i, 0, 1, 7)
             for value in item:
                 value = str(value)
                 if j == 0:
                     beat = value
+                    photo_label = QtWidgets.QLabel()
+                    pixmap = QtGui.QPixmap(beat + '.jpg')
+                    pixmap = pixmap.scaled(48, 48, QtCore.Qt.IgnoreAspectRatio, QtCore.Qt.SmoothTransformation)
+                    photo_label.setPixmap(pixmap)
                     categorieslayout.addWidget(QtWidgets.QLabel(str(i+1)), i, j, 1, 1)
-                    j += 1
-                if j == 2:
+                    categorieslayout.addWidget(photo_label, i, j+1, 1, 1)
+                    j += 2
+                if j == 3:
+                    author = value
+                    button = QtWidgets.QPushButton(author)
+                    button.setCursor(QtGui.QCursor(QtCore.Qt.OpenHandCursor))
+                    categorieslayout.addWidget(button, i, j, 1, 1)
+                    button.clicked.connect(lambda state, line= author: display_author(line))
+                if j == 4:
                     style = value
                     button = QtWidgets.QPushButton(value)
-                    button.setStyleSheet("background-color: #353535; border: 0px;")
+                    button.setCursor(QtGui.QCursor(QtCore.Qt.OpenHandCursor))
                     categorieslayout.addWidget(button, i, j, 1, 1)
                     button.clicked.connect(lambda state, line = style: display_style(line))
-                else:
+                if j != 3 and j != 4:
                     categorieslayout.addWidget(QtWidgets.QLabel(value), i, j, 1, 1)
                 j += 1
             button = QtWidgets.QPushButton("Прослушать")
@@ -459,7 +610,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
             categorieslayout.addWidget(button, i, j, 1, 1)
             button = QtWidgets.QPushButton("Приобрести")
             button.setStyleSheet("background-color: #cc0000;")
-            button.clicked.connect(lambda state, item = beat: buy(item))
+            button.clicked.connect(lambda state, item = [beat, author]: buy(item))
             categorieslayout.addWidget(button, i, j+1, 1, 1)
             i += 1
             j = 0
@@ -519,6 +670,91 @@ class Ui_MainWindow(QtWidgets.QWidget):
                 self.pushButton_6.setText("Приостановить")
                 self.label.setText(id)
 
+        def display_author(author):
+            self.cleanlayout()
+
+            self.groupBox.setTitle("Автор " + author)
+
+            query = "select f_name, l_name, nick, country, city, about, reg_date from user_acc where nick = %s;"
+            data = (author, )
+            cursor.execute(query, data)
+
+            i = 0
+            j = 0
+
+            for item in cursor:
+                for value in item:
+                    value = str(value)
+                    if i == 0:
+                        self.gridLayout_2.addWidget(QtWidgets.QLabel("Имя " + value), i, 0, 1, 1)
+                    if i == 1:
+                        self.gridLayout_2.addWidget(QtWidgets.QLabel("Фамилия " + value), i, 0, 1, 1)
+                    if i == 2:
+                        self.gridLayout_2.addWidget(QtWidgets.QLabel("Никнейм " + value), i, 0, 1, 1)
+                        self.profilebutton.setText(value)
+                        global nick
+                        nick = value
+                    if i == 3:
+                        self.gridLayout_2.addWidget(QtWidgets.QLabel("Cтрана " + value), i, 0, 1, 1)
+                    if i == 4:
+                        self.gridLayout_2.addWidget(QtWidgets.QLabel("Город " + value), i, 0, 1, 1)
+                    if i == 5:
+                        self.gridLayout_2.addWidget(QtWidgets.QLabel("О себе " + value), i, 0, 1, 1)
+                    if i == 6:
+                        self.gridLayout_2.addWidget(QtWidgets.QLabel("Дата регистрации " + value), i, 0, 1, 1)
+                    i += 1
+
+
+            query = "select s_name, au_name, style, price, upload_date from samples where au_name = %s order by amount desc;"
+
+            data = (author, )
+            cursor.execute(query, data)
+
+
+            for item in cursor:
+                item_group = QtWidgets.QGroupBox(" ")
+                categorieslayout = QtWidgets.QGridLayout(item_group)
+                self.gridLayout_2.addWidget(item_group, i, 0, 1, 1)
+                for value in item:
+                    value = str(value)
+                    if j == 0:
+                        beat = value
+                    categorieslayout.addWidget(QtWidgets.QLabel(value), i, j, 1, 1)
+                    j += 1
+                button = QtWidgets.QPushButton("Прослушать")
+                # button.setIcon(QtGui.QIcon("play.svg"))
+                button.clicked.connect(lambda state, item=beat: play(item))
+                categorieslayout.addWidget(button, i, j, 1, 1)
+                button = QtWidgets.QPushButton("Приобрести")
+                button.setStyleSheet("background-color: #cc0000;")
+                button.clicked.connect(lambda state, beat=id: play(id))
+                categorieslayout.addWidget(button, i, j + 1, 1, 1)
+                i += 1
+                j = 0
+
+            def play(id):
+
+                if self.groupBox_2.isVisible():
+                    pass
+                else:
+                    self.groupBox_2.setVisible(True)
+
+                global playlist
+                global player
+
+                url = QtCore.QUrl.fromLocalFile("./" + id + ".mp3")
+                playlist.addMedia(QtMultimedia.QMediaContent(url))
+
+                query = "update samples set amount = amount + 1 where s_name = %s;"
+                data = (id,)
+                cursor.execute(query, data)
+                cnx.commit()
+
+                player.play()
+                self.pushButton_6.setText("Приостановить")
+                self.label.setText(id)
+
+
         def play(id):
 
             if self.groupBox_2.isVisible():
@@ -539,10 +775,17 @@ class Ui_MainWindow(QtWidgets.QWidget):
 
             player.play()
             self.pushButton_6.setText("Приостановить")
+            self.pushButton_6.setStyleSheet("background-color: #cc0000;")
             self.label.setText(id)
 
-        def buy(id):
-            basket.append(id)
+        def buy(item):
+
+            id = item[0]
+            author = item [1]
+            global nick
+            if author != nick and id not in basket:
+                basket.append(id)
+                Message.show(Message, "Информация", "Товар добавлен в корзину")
 
     def search(self):
         self.cleanlayout()
@@ -640,6 +883,12 @@ class Ui_MainWindow(QtWidgets.QWidget):
                 if j == 0:
                     item_group.setTitle(str(value))
                     j += 1
+                    photo_label = QtWidgets.QLabel()
+                    pixmap = QtGui.QPixmap(str(value) + '.jpg')
+                    pixmap = pixmap.scaled(48, 48, QtCore.Qt.IgnoreAspectRatio, QtCore.Qt.SmoothTransformation)
+                    photo_label.setPixmap(pixmap)
+                    categorieslayout.addWidget(i, j-1, 1, 1)
+                    i += 1
                     continue
                 value = str(value)
                 categorieslayout.addWidget(QtWidgets.QLabel(value), i, j, 1, 1)
@@ -662,7 +911,12 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.label_4 = QtWidgets.QLabel(self.groupBox)
         self.label_4.setText("Цена")
         self.gridLayout_2.addWidget(self.label_4, 0, 2, 1, 1)
-        self.lineEdit_2 = QtWidgets.QLineEdit(self.groupBox)
+        self.lineEdit_2 = QtWidgets.QComboBox(self.groupBox)
+        self.lineEdit_2.addItem("Pop")
+        self.lineEdit_2.addItem("Hip-hop")
+        self.lineEdit_2.addItem("R&B")
+        self.lineEdit_2.addItem("Electronic")
+        self.lineEdit_2.addItem("World")
         self.gridLayout_2.addWidget(self.lineEdit_2, 1, 1, 1, 1)
         self.lineEdit_4 = QtWidgets.QLineEdit(self.groupBox)
         self.gridLayout_2.addWidget(self.lineEdit_4, 1, 2, 1, 1)
@@ -682,14 +936,31 @@ class Ui_MainWindow(QtWidgets.QWidget):
                     nickname = str(value)
 
             try:
-                data = (self.lineEdit.text(), nickname, user_id, self.lineEdit_2.text(), self.lineEdit_4.text(), str(self.lineEdit.text() + ".mp3"))
+                data = (self.lineEdit.text(), nickname, user_id, self.lineEdit_2.itemText(self.lineEdit_2.currentIndex()), self.lineEdit_4.text(), str(self.lineEdit.text() + ".mp3"))
                 query = "insert into samples value (default, %s, %s ,%s, %s, %s, current_date(), %s, default)"
                 cursor.execute(query, data)
-                cnx.commit()
             except BaseException:
                 pass
 
+            try:
+
+                text = QtWidgets.QFileDialog.getOpenFileName(self, "Загрузка трека", 'C://Users')
+
+                if text != "" and text != " ":
+                    import os
+                    os.rename(text[0], "./" + self.lineEdit.text() + ".mp3")
+
+                text = QtWidgets.QFileDialog.getOpenFileName(self, "Загрузка изображения", 'C://Users')
+
+                if text != "" and text != " ":
+                    import os
+                    os.rename(text[0], "./" + self.lineEdit.text() + ".jpg")
+
+            except BaseException:
+                Message.show(Message, "Ошибка", "Вы ввели недостаточно данных!")
+
             self.beats()
+            cnx.commit()
 
         button.clicked.connect(adder)
 
@@ -1002,12 +1273,53 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.pushButton_6.clicked.connect(lambda: mod())
 
         def mod():
-            data = (self.lineEdit_7, self.lineEdit_8.text(), self.lineEdit.text(), self.lineEdit_2.text(), self.lineEdit_3.text(), self.lineEdit_4.text(),
-                    self.lineEdit_5.text(),self.lineEdit_5, self.lineEdit_6.text())
-            query = "Insert into user_acc values (default, %s, %s, %s, %s, %s, %s, %s, %s, %s, now(), 'user';"
+            data = (self.lineEdit_7.text(), self.lineEdit_8.text(), self.lineEdit.text(), self.lineEdit_2.text(), self.lineEdit_3.text(), self.lineEdit_4.text(),
+                    self.lineEdit_5.text(),self.lineEdit_5.text(), self.lineEdit_6.text())
+            query = "Insert into user_acc values (default, %s, %s, %s, %s, %s, %s, %s, %s, %s, now(), 'user');"
             cursor.execute(query, data)
             cnx.commit()
             self.profile()
+
+    def addnews(self):
+        self.cleanlayout()
+
+
+        self.label_2 = QtWidgets.QLabel(self.groupBox)
+        self.label_2.setText("Название новости")
+        self.gridLayout_2.addWidget(self.label_2, 0, 0, 1, 1)
+        self.label = QtWidgets.QLabel(self.groupBox)
+        self.label.setText("Текст")
+        self.gridLayout_2.addWidget(self.label, 0, 1, 1, 1)
+        self.lineEdit = QtWidgets.QLineEdit(self.groupBox)
+        self.gridLayout_2.addWidget(self.lineEdit, 1, 0, 1, 1)
+        self.lineEdit_2 = QtWidgets.QLineEdit(self.groupBox)
+        self.gridLayout_2.addWidget(self.lineEdit_2, 1, 1, 1, 1)
+
+        button = QtWidgets.QPushButton("Добавить")
+        self.gridLayout_2.addWidget(button, 2, 0, 2, 2)
+
+        def adder():
+
+            query = "insert into news values (default, %s, %s);"
+            data = (self.lineEdit.text(), self.lineEdit_2.text())
+            cursor.execute(query, data)
+
+            try:
+
+                text = QtWidgets.QFileDialog.getOpenFileName(self, "Загрузка изображения", 'C://Users')
+
+                if text != "" and text != " ":
+                    import os
+                    os.rename(text[0], "./" + self.lineEdit.text() + ".jpg")
+
+            except BaseException:
+                Message.show(Message, "Ошибка", "Вы ввели недостаточно данных!")
+
+            cnx.commit()
+
+            self.profile()
+
+        button.clicked.connect(adder)
 
 
 class Message(object):
